@@ -49,36 +49,51 @@ Máquina de café implementada con una máquina de estados basada en una `sealed
 - `SirviendoCafe -> Apagada | SeleccionandoProducto`
 - `Error -> Apagada | SeleccionandoProducto`
 
-
 ## Diagrama de estados
+
 ```mermaid
 stateDiagram-v2
-Apagada : onEnter / println("Entrando en estado Apagada")
+direction TB
+[*] --> Apagada
+
+state Apagada {
+  entry / println("Entrando en estado Apagada")
+}
+
 Apagada --> SeleccionandoProducto : encender
 
-state SeleccionandoProducto as "SeleccionandoProducto"
-SeleccionandoProducto : onEnter / println("Esperando selección. Crédito actual: €{credito}")
+state SeleccionandoProducto as "SeleccionandoProducto" {
+  entry / println("Esperando selección. Crédito actual: €")
+}
+
 SeleccionandoProducto --> SeleccionandoProducto : insertarCredito / credito += cantidad
 SeleccionandoProducto --> PreparandoCafe_marca : seleccionarProducto (si credito >= precio)\nacción: credito -= precio
 SeleccionandoProducto --> Error_mensaje : seleccionarProducto (si credito < precio)
 
-state PreparandoCafe_marca as "PreparandoCafe(marca)"
-PreparandoCafe_marca : onEnter / iniciar Thread (simula preparación)
+state PreparandoCafe_marca as "PreparandoCafe(marca)" {
+  entry / iniciar Thread (simula preparación)
+}
+
 PreparandoCafe_marca --> SirviendoCafe_marca_recipiente : preparación completada (hilo)
 PreparandoCafe_marca --> Error_mensaje : excepción / preparación interrumpida
 
-state SirviendoCafe_marca_recipiente as "SirviendoCafe(marca, recipiente)"
-SirviendoCafe_marca_recipiente : onEnter / println("Sirviendo café")
+state SirviendoCafe_marca_recipiente as "SirviendoCafe(marca, recipiente)" {
+  entry / println("Sirviendo café")
+}
+
 SirviendoCafe_marca_recipiente --> Apagada : apagar / println("Café servido. Máquina apagada.")
 SirviendoCafe_marca_recipiente --> SeleccionandoProducto : listo para nueva selección
 
-state Error_mensaje as "Error(mensaje)"
-Error_mensaje : onEnter / println("Estado Error: {mensaje}")
+state Error_mensaje as "Error(mensaje)" {
+  entry / println("Estado Error")
+}
+
 Error_mensaje --> SeleccionandoProducto : encender / reiniciar después del error
 Error_mensaje --> Apagada : (válido según isValidTransition)
 
 note right of PreparandoCafe_marca
-Preparación asíncrona: onEnter lanza un Thread que tras sleep() llama a setEstado(SirviendoCafe(...)).
+Preparación asíncrona: entry lanza un Thread que tras sleep() llama a setEstado(SirviendoCafe(...)).
 end note
-
 ```
+
+
